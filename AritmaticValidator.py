@@ -82,17 +82,19 @@ class Parser:
         print("Ekspresi tidak valid")
         sys.exit(0)
 
-
 def tokenize(expression):
     # Memecah ekspresi menjadi token (angka dan operator)
     tokens = []
     i = 0
-    while i < len(expression):
-        if expression[i].isdigit():
-            num = ""
-            while i < len(expression) and expression[i].isdigit():
+    while i < len(expression): #looping all expression
+        if expression[i].isdigit(): #ngecek angka kalau input = angka = digit
+            num = "" #num as string
+            while i < len(expression) and expression[i].isdigit(): 
                 num += expression[i]
                 i += 1
+                if len (num) > 1 and num[0] == '0':
+                    print("Expresi tidak valid: digit tidak diawali dengan 0") #0xx tidak valid
+                    sys.exit(0)           
             tokens.append(num)
         elif expression[i:i+2] == "**":  # Tangani operator pangkat
             tokens.append("**")
