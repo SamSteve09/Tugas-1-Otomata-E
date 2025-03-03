@@ -63,9 +63,9 @@ class Parser:
     def parse_factor(self, allow_unary=True):
         # Memproses factor → ("-" factor) | NUMBER | "(" expr ")"
         if self.peek() == '-':  # Negasi tunggal diperbolehkan
-                if not allow_unary:
-                print("Unary minus tidak diizinkan")
-                sys.exit(0)
+            if not allow_unary:
+                  print("Unary minus tidak diizinkan")
+                  sys.exit(0)
             self.consume()
             result = self.parse_factor(allow_unary=True)
             if result == 0:
