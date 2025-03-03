@@ -32,71 +32,73 @@ class Parser:
         self.index += 1
         return token
 
-    def parse_expression(self):
-        node = self.parse_term()
+    def parse_expression(self, allow_unary=True):
+        node = self.parse_term(allow_unary=allow_unary)
         while self.peek() in ('+', '-'):
             op = self.consume()
-            if self.peek() == '-':  # Cek aturan x + (-y) tidak boleh
-                print("Ekspresi tidak valid")
-                sys.exit(0)
-            right = self.parse_term()
+            
+            # Operand kanan tidak boleh dimulai dengan unary minus
+            right = self.parse_term(allow_unary=False)
             node = (op, node, right)
         return node
 
-    def parse_term(self):
+    def parse_term(self, allow_unary=True):
         # Memproses term → factor (("*" | "/") factor)
-        node = self.parse_exponent()
+        node = self.parse_exponent(allow_unary=allow_unary)
         while self.peek() in ('*', '/'):
             op = self.consume()
-            right = self.parse_exponent()
+            right = self.parse_exponent(allow_unary=False)
             node = (op, node, right)
         return node
 
-    def parse_exponent(self):
+    def parse_exponent(self, allow_unary=True):
         # Menangani pangkat ** yang memiliki prioritas lebih tinggi
-        node = self.parse_factor()
+        node = self.parse_factor(allow_unary=allow_unary)
         while self.peek() == '**':
             op = self.consume()
-            right = self.parse_factor()
+            right = self.parse_factor(allow_unary=False)
             node = (op, node, right)
         return node
 
-    def parse_factor(self):
+    def parse_factor(self, allow_unary=True):
         # Memproses factor → ("-" factor) | NUMBER | "(" expr ")"
         if self.peek() == '-':  # Negasi tunggal diperbolehkan
-            self.consume()
-            if self.peek() == '-':  # Tidak boleh lebih dari satu tanda minus
-                print("Ekspresi tidak valid")
+                if not allow_unary:
+                print("Unary minus tidak diizinkan")
                 sys.exit(0)
-            return -self.parse_factor()
+            self.consume()
+            result = self.parse_factor(allow_unary=True)
+            if result == 0:
+                print("0 pada awal expresi aritmatika tidak boleh diawali dengan tanda \"-\" ")
+                sys.exit(0)
+            return -result
 
         token = self.consume()
         if token.isdigit():  # Jika angka, kembalikan sebagai daun pohon
             return int(token)
         elif token == '(':  # Jika tanda kurung buka, parsing sub-ekspresi
-            node = self.parse_expression()
+            node = self.parse_expression(allow_unary=True)
             if self.consume() != ')':  # Harus diikuti dengan tanda tutup kurung
                 print("Ekspresi tidak valid")
                 sys.exit(0)
             return node
-        print("Ekspresi tidak valid")
+        print("Tanda tidak seimbang")
         sys.exit(0)
 
 def tokenize(expression):
-    # Memecah ekspresi menjadi token (angka dan operator)
     tokens = []
     i = 0
-    while i < len(expression): #looping all expression
-        if expression[i].isdigit(): #ngecek angka kalau input = angka = digit
-            num = "" #num as string
-            while i < len(expression) and expression[i].isdigit(): 
+    while i < len(expression):
+        if expression[i].isdigit():
+            num = ""
+            while i < len(expression) and expression[i].isdigit():
                 num += expression[i]
                 i += 1
-                if len (num) > 1 and num[0] == '0':
-                    print("Expresi tidak valid: digit tidak diawali dengan 0") #0xx tidak valid
-                    sys.exit(0)           
+            if len(num) > 1 and num[0] == '0':
+                print("Digit tidak diawali dengan 0")
+                sys.exit(0)
             tokens.append(num)
-        elif expression[i:i+2] == "**":  # Tangani operator pangkat
+        elif expression[i:i+2] == "**":
             tokens.append("**")
             i += 2
         elif expression[i] in "+-*/()":
@@ -109,15 +111,12 @@ def tokenize(expression):
             sys.exit(0)
 
     for j in range(len(tokens) - 1):
-        if tokens[j] == ')' and (tokens[j + 1].isdigit() or tokens[j + 1] == '('):
-            print(
-                "Ekspresi tidak valid: tanda kurung diikuti angka atau tanda kurung tanpa operator.")
+        if tokens[j] == ')' and (tokens[j+1].isdigit() or tokens[j+1] == '('):
+            print("Tanda kurung diikuti angka atau tanda kurung tanpa operator.")
             sys.exit(0)
-        if tokens[j].isdigit() and tokens[j + 1] == '(':
-            print(
-                "Ekspresi tidak valid: angka langsung diikuti tanda kurung tanpa operator.")
+        if tokens[j].isdigit() and tokens[j+1] == '(':
+            print("Angka langsung diikuti tanda kurung tanpa operator.")
             sys.exit(0)
-
     return tokens
 
 
@@ -129,15 +128,14 @@ def evaluate(expr):
 
     tokens = tokenize(expr)
     parser = Parser(tokens)
-    ast = parser.parse_expression()
+    parser.parse_expression()
+    print("Ekspresi Valid")
 
-    if bool(ast):
-        print("Ekspresi Valid")
+testc = int(input("Masukkan jumlah ekspresi: "))
 
-
-exs = ["(2 + 4) ** (7 * (9 - 3)/4) / 4 * (2 + 8) - 1",
-       "(((2 + 4) * (7 * (9 - 3)/4) / 4) (* (2 + 8) - 1))",
-       "(-2 + 4) ** (7 * (-9 * -3)/-4) / -4 * (2 - -8) - 1"]
-
-
-evaluate(exs[2])
+for i in range(testc):
+    AE = input("Contoh (2+5-4**3): ")
+    try:
+        evaluate(AE)
+    except SystemExit:
+        print("Ekspresi tidak valid")
